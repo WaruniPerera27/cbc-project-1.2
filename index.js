@@ -1,75 +1,55 @@
 import bodyParser from "body-parser";
 import express from "express";
 import mongoose from "mongoose";
-import studentRouter from "./routers/studentRouter.js"
-import userRouter from "./routers/userRouter.js"
-import jwt from "jsonwebtoken"
+import userRouter from "./routers/userRouter.js";
+import jwt from "jsonwebtoken";
+import productRouter from "./routers/productRouter.js";
 
 const app = express();
 
+// Middleware
+app.use(bodyParser.json());
 
-app.use(bodyParser.json())
+// Authentication middleware - FIXED
+app.use((req, res, next) => {
+    const authHeader = req.header("Authorization");
+    
+    if (!authHeader) {
+        return next(); // No token, continue without authentication
+    }
 
-app.use(
-    (res,req,next )=>{
-        const value=req.header("Authorization")
-        if(value !=null){
-            const token=value.replace("Bearer ","")
-            jwt.verify
-                (token,
-                "cbc-6503",
-                (err,decoded)=>{
-                    if(decoded==null){
-                        res.statusCode(403).json({
-                            message:"unauthorized"
-                        })
-                    }else{
-                        req.user=decoded
-                        next()
-                    }
+    if (!authHeader.startsWith("Bearer ")) {
+        return res.status(400).json({ message: "Invalid authorization format" });
+    }
 
-                }
-            )
-        
+    const token = authHeader.replace("Bearer ", "");
 
-        }else {
-        next()
-
-
-        
+    jwt.verify(token, "cbc-6503", (err, decoded) => {
+        if (err) {
+            return res.status(403).json({ message: "Unauthorized" });
         }
-    }
-)
+        
+        req.user = decoded;
+        next();
+    });
+});
 
+// Database connection
+const connectionString = "mongodb+srv://waruni:1234@cluster0.tlnouk6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
+mongoose.connect(connectionString)
+    .then(() => {
+        console.log("Database connected");
+    })
+    .catch((err) => {
+        console.log("Failed to connect database", err);
+    });
 
+// Routes
+app.use("/user", userRouter);
+app.use("/products", productRouter);
 
-
-
-
-const connectionString = "mongodb+srv://waruni:1234@cluster0.tlnouk6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-
-//.then use to if database correctly connected then give console log output
-mongoose.connect(connectionString).then(
-()=>{
-    console.log("database connected")
-}) 
-.catch(
-    ()=>{
-
-        console.log("Failed to connect database")
-    }
-)
-
-//connect router to main code / we can use any any name behalf of "students" its not matter
-app.use("/students",studentRouter)
-app.use("/user", userRouter)
-
-//5000 is port number(we can use 3000  5000 8080 they are not recevied port numbers /started 0-65000)
-app.listen(5000,  ()=>{
-
-    console.log("Server started....")
-})
-
-
-
+// Server start
+app.listen(5000, () => {
+    console.log("Server started on port 5000");
+});
