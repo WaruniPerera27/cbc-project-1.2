@@ -42,3 +42,41 @@ export async function getProducts(req, res) {
         return res.status(500).json({ message: "Internal server error" });
     }
 }
+export async function  deleteProduct(req, res) {
+    if (!isAdmin(req)) {
+        res.status(403).json({ message: "Unauthorized: Admin access required" });
+        return;
+    }
+    try {
+        const productId = req.params.productId;
+
+        await Product.deleteOne({ productId: productId });
+
+        res.json({ message: "Product deleted successfully" });
+
+    } catch (error) {
+        console.error("Error deleting product:", error);
+        res.status(500).json({ message: "Failed to Delete" });
+        return
+    }
+}
+
+export async function updateProduct(req, res) {
+    if (!isAdmin(req)) {
+        res.status(403).json({ message: "Unauthorized: Admin access required" });
+        return;
+    }
+
+    const data = req.body;
+    const productId = req.params.productId;
+    data.productId = productId;
+
+    try{
+        await Product.updateOne({ productId: productId }, data);
+        res.json({ message: "Product updated successfully" });
+    }
+    catch (error) {
+        console.error("Error updating product:", error);
+        res.status(500).json({ message: "Failed to update product" });
+    }
+}
