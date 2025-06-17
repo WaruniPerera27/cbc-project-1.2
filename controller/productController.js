@@ -80,3 +80,31 @@ export async function updateProduct(req, res) {
         res.status(500).json({ message: "Failed to update product" });
     }
 }
+
+export async function getProductById(req, res) {
+    try {
+        const productId = req.params.productId;
+        const product=await Product.findOne({ productId: productId });
+        if(product == null){
+           res.status(404).json({ message: "Product not found" });
+           return
+        }
+
+        if (isAdmin(req)) {
+           res.json(product);
+        } else {
+          if (product.isAvailable === true){
+            res.json(product);
+            
+          } else {
+            res.status(404).json({ message: "Product not found" });
+            return;
+          }
+          
+        }
+
+    } catch (error) {
+        console.error("Error fetching product by ID:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}

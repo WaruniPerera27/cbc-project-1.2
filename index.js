@@ -4,6 +4,9 @@ import mongoose from "mongoose";
 import userRouter from "./routers/userRouter.js";
 import jwt from "jsonwebtoken";
 import productRouter from "./routers/productRouter.js";
+import dotenv from "dotenv";
+dotenv.config();
+
 
 const app = express();
 
@@ -24,7 +27,7 @@ app.use((req, res, next) => {
 
     const token = authHeader.replace("Bearer ", "");
 
-    jwt.verify(token, "cbc-6503", (err, decoded) => {
+    jwt.verify(token, process.env.JWT_SECRET=1234, (err, decoded) => {
         if (err) {
             return res.status(403).json({ message: "Unauthorized" });
         }
@@ -35,7 +38,7 @@ app.use((req, res, next) => {
 });
 
 // Database connection
-const connectionString = "mongodb+srv://waruni:1234@cluster0.tlnouk6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const connectionString = process.env.MONGO_URL
 
 mongoose.connect(connectionString)
     .then(() => {
