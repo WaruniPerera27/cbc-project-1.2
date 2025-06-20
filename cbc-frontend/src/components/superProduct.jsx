@@ -1,10 +1,10 @@
 import ProductCard from "./productCard";
 
-export default function SuperProduct(p) {
+export default function SuperProduct() {
 
     return(
         <div>
-            <h1>Featured This week....</h1>
+           
             <ProductCard
             name="iPhone 16 pro max"
             price=" Price:1290$"
@@ -13,6 +13,7 @@ export default function SuperProduct(p) {
             
         </div>
     )
+
 
 
 
