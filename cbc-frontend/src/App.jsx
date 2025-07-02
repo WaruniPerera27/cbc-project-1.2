@@ -1,32 +1,24 @@
 import './App.css'
-import ProductCard from './components/productCard'
-import SuperProduct from './components/SuperProduct'
+import AdminPage from './pages/adminPage.jsx'
+import HomePage from './pages/homePage.jsx'
+import LoginPage from './pages/loginPage.jsx'
+import RegisterPage from './pages/rejisterPage.jsx'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 function App() {
   return (
-    <>
-      <div className="min-h-screen bg-gray-300 flex flex-col items-center p-6 gap-6 ">
-        <h1 className="text-4xl font-bold text-gray-800">Featured This week....</h1>
-        <SuperProduct />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <ProductCard
-            name="iPhone 16 Pro Max"
-            price="1290$"
-            image="https://picsum.photos/id/1/200/300"
-          />
-          <ProductCard
-            name="iPhone 15 Pro Max"
-            price="1000$"
-            image="https://picsum.photos/id/2/200/300"
-          />
-          <ProductCard
-            name="iPhone 11 Pro Max"
-            price="900$"
-            image="https://picsum.photos/id/3/200/300"
-          />
+    <BrowserRouter>
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="w-[calc(100vw-5px)] h-[calc(100vh-5px)] bg-green-700">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/admin/*"element={<AdminPage/>}/>
+          </Routes>
         </div>
       </div>
-    </>
+    </BrowserRouter>
   )
 }
 
