@@ -1,5 +1,3 @@
-import './App.css'
-import AdminPage from './pages/adminPage.jsx'
 import HomePage from './pages/homePage.jsx'
 import LoginPage from './pages/loginPage.jsx'
 import RegisterPage from './pages/rejisterPage.jsx'
