@@ -4,8 +4,8 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
 
-export function createUser(req,res){
 
+export function createUser(req,res){
 
     const passwordHash = bcrypt.hashSync(req.body.password,10)
     
@@ -33,62 +33,56 @@ export function createUser(req,res){
             })
         }
     )
-}
+} 
 
 export function loginUser(req,res){
-    const email=req.body.email
-    const password=req.body.password
+    const email = req.body.email
+
+    const password = req.body.password
 
     User.findOne(
         {
-            email:email
+            email : email
         }
     ).then(
         (user)=>{
-        if(user==null){
-            res.status(404).json(
-                {
-                    message:"User Not Found"
-                } )
-               // return;//stop running function
-        } else{
-            const isPasswordCorrect = bcrypt.compareSync(password, user.password)
-            if(isPasswordCorrect){
-                    const token = jwt.sign({
-                                email : user.email,
-                                firstName:user.firstName,
-                                lastName:user.lastName,
-                                role:user.role,
-                                isBlocked:user.isBlocked,
-                                isEmailVerified : user.isEmailVerified,
-                                image:user.image
-                     },
-                      process.env.JWT_SECRET=1234
-                )
-
-
-{ 
-
-
-             res.json({
-                token:token,
-                message:"login successful"
-             })
-         }
-     }   
-            
-            else{
-                res.status(403).json({
-                    message:"Incorrect Password"
+            if(user == null){
+                res.status(404).json({
+                    message : "User not found"
                 })
+            }else{
+                const isPasswordCorrect = bcrypt.compareSync(password,user.password)
+                if(isPasswordCorrect){
+
+                    const token = jwt.sign(
+                        {
+                            email : user.email,
+                            firstName : user.firstName,
+                            lastName : user.lastName,
+                            role : user.role,
+                            isBlocked : user.isBlocked,
+                            isEmailVerified : user.isEmailVerified,
+                            image : user.image
+                        },
+                        process.env.JWT_SECRET
+                    )
+
+
+                    res.json({
+                        token : token,
+                        message : "Login successful",
+                        role : user.role
+                    })
+                }else{
+                    res.status(403).json({
+                        message : "Incorrect password"
+                    })
+                }
             }
         }
-    
-    }
-        
     )
-
 }
+
 export function isAdmin(req){
     
     if(req.user == null){
@@ -101,39 +95,3 @@ export function isAdmin(req){
         return false;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

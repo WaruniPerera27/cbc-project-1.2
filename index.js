@@ -5,6 +5,7 @@ import userRouter from "./routers/userRouter.js";
 import jwt from "jsonwebtoken";
 import productRouter from "./routers/productRouter.js";
 import dotenv from "dotenv";
+import cors from "cors";
 dotenv.config();
 
 
@@ -12,30 +13,34 @@ const app = express();
 
 // Middleware
 app.use(bodyParser.json());
-
-// Authentication middleware - FIXED
-app.use((req, res, next) => {
-    const authHeader = req.header("Authorization");
+app.use(cors())
     
-    if (!authHeader) {
-        return next(); // No token, continue without authentication
+
+
+app.use(
+    (req,res,next)=>{
+        const value = req.header("Authorization")
+        if(value != null){
+            const token = value.replace("Bearer ","")
+            jwt.verify(
+                token,
+                process.env.JWT_SECRET,
+                (err,decoded)=>{
+                    if(decoded == null){
+                        res.status(403).json({
+                            message : "Unauthorized"
+                        })
+                    }else{
+                        req.user = decoded
+                        next()
+                    }                    
+                }
+            )
+        }else{
+            next()
+        }        
     }
-
-    if (!authHeader.startsWith("Bearer ")) {
-        return res.status(400).json({ message: "Invalid authorization format" });
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-
-    jwt.verify(token, process.env.JWT_SECRET=1234, (err, decoded) => {
-        if (err) {
-            return res.status(403).json({ message: "Unauthorized" });
-        }
-        
-        req.user = decoded;
-        next();
-    });
-});
+)
 
 // Database connection
 const connectionString = process.env.MONGO_URL
