@@ -51,7 +51,7 @@ export async function createOrder(req, res) {
 
         total += product.price * item.qty;
 
-        // ✅ Update stock only (avoids validation issues with subPage)
+        //  Update stock only (avoids validation issues with subPage)
         await Product.updateOne(
           { productId: product.productId },
           { $inc: { stock: -item.qty } }
