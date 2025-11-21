@@ -108,3 +108,33 @@ export async function getProductById(req, res) {
         return res.status(500).json({ message: "Internal server error" });
     }
 }
+
+export async function searchProducts(req,res){
+	const query = req.params.query
+
+	try{
+		const products = await Product.find({
+			$or: [ // Search by name or altNames no need to matach both conditions.
+				{name:  { $regex:query , $options: "i"}},// $options: "i"  means case insensitive
+				{altNames : {$elemMatch : { $regex: query, $options: "i" }}}
+			],
+			isAvailable: true			
+		})
+		res.json(products);
+	}catch{
+		res.status(500).json({ message: "Failed to search products" });
+	}
+
+	
+}
+
+export async function getProductsBySubPage(req, res) {
+    try {
+        const subPage = req.params.subPage;
+        const products = await Product.find({ subPage, isAvailable: true });
+        res.json(products);
+    } catch (error) {
+        console.error("Error fetching products by subPage:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
