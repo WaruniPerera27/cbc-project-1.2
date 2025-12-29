@@ -1,70 +1,68 @@
-import bodyParser from "body-parser";
 import express from "express";
 import mongoose from "mongoose";
-import userRouter from "./routers/userRouter.js";
-import jwt from "jsonwebtoken";
-import productRouter from "./routers/productRouter.js";
 import dotenv from "dotenv";
 import cors from "cors";
+import jwt from "jsonwebtoken";
+
+import userRouter from "./routers/userRouter.js";
+import productRouter from "./routers/productRouter.js";
 import orderRouter from "./routers/orderRouter.js";
 import reviewRoutes from "./routers/reviewRoutes.js";
 import newsletterRoutes from "./routers/newsletter.js";
 
 dotenv.config();
 
-const app = express();
+const app = express(); // ✅ CREATE APP FIRST
 
-// Middleware 
-app.use(bodyParser.json()); 
-app.use(cors());
+// ✅ CORS (ONLY ONCE)
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://cbc-frontend-naturaglow.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
+
+// ✅ Body parser
 app.use(express.json());
 
-app.use(
-    (req, res, next) => {
-        const value = req.header("Authorization");
-        if (value != null) {
-            const token = value.replace("Bearer ", "");
-            jwt.verify(
-                token,
-                process.env.JWT_SECRET,
-                (err, decoded) => {
-                    if (decoded == null) {
-                        res.status(403).json({
-                            message: "Unauthorized"
-                        });
-                    } else {
-                        req.user = decoded;
-                        next();
-                    }
-                }
-            );
-        } else {
-            next();
-        }
-    }
-);
-
-// Database connection
-const connectionString = process.env.MONGO_URL;
-
-mongoose.connect(connectionString)
-    .then(() => {
-        console.log("Database connected");
-    })
-    .catch((err) => {
-        console.log("Failed to connect database", err);
+// ✅ JWT middleware
+app.use((req, res, next) => {
+  const value = req.header("Authorization");
+  if (value) {
+    const token = value.replace("Bearer ", "");
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      req.user = decoded;
+      next();
     });
+  } else {
+    next();
+  }
+});
 
-// Routes
+// ✅ Database
+mongoose.connect(process.env.MONGO_URL)
+  .then(() => console.log("Database connected"))
+  .catch(err => console.error("DB connection failed", err));
+
+// ✅ Routes
 app.use("/user", userRouter);
 app.use("/products", productRouter);
 app.use("/orders", orderRouter);
 app.use("/reviews", reviewRoutes);
 app.use("/newsletter", newsletterRoutes);
 
-console.log("Data fetched successfully");
+// ✅ Root test
+app.get("/", (req, res) => {
+  res.send("API is running");
+});
 
-// Server start
-app.listen(5000, () => {
-    console.log("Server started on port 5000");
+// ✅ Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server started on port ${PORT}`);
 });
