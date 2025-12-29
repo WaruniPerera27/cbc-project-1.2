@@ -14,7 +14,6 @@ const productRouter = express.Router();
 productRouter.post("/", createProduct);
 productRouter.get("/", getProducts);
 
-
 productRouter.get("/search/:query", searchProducts);
 productRouter.get("/subpage/:subPage", getProductsBySubPage);
 
