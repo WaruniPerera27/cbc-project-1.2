@@ -210,61 +210,67 @@ export async function googleLogin(req, res) {
 
 //  Send OTP with Gmail
 export async function sendOTP(req, res) {
-  const email = req.body.email;
-  const otpCode = Math.floor(100000 + Math.random() * 900000);
+  const { email } = req.body;
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString(); // ✅ STRING
 
   try {
-    await OTP.deleteMany({ email: email });
+    await OTP.deleteMany({ email });
 
-    const newOTP = new OTP({ email: email, otp: otpCode });
+    const newOTP = new OTP({ email, otp: otpCode });
     await newOTP.save();
 
     const message = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "Your OTP Code",
-      text: `Your OTP code is ${otpCode}`,
+      subject: "Your OTP Code - NaturaGlow",
+      text: `Your OTP code is ${otpCode}. This OTP is valid for 5 minutes.`,
     };
 
-    transporter.sendMail(message, (error, info) => {
+    transporter.sendMail(message, (error) => {
       if (error) {
-        console.error("Error sending email:", error);
-        res.status(500).json({ message: "Failed to send OTP" });
-      } else {
-        console.log("Email sent:", info.response);
-        res.json({ message: "OTP sent successfully" });
+        console.error("Email error:", error);
+        return res.status(500).json({ message: "Failed to send OTP" });
       }
+      res.json({ message: "OTP sent successfully" });
     });
+
   } catch (error) {
     console.error("OTP error:", error);
     res.status(500).json({ message: "Failed to process OTP" });
   }
 }
 
-export async function resetPassword(req,res){
-    const email = req.body.email;
-    const newPassword = req.body.newPassword;
-    const otp = req.body.otp;
 
-    try{
-        const otpRecord = await OTP.findOne({ email: email, otp: otp });
-        if(!otpRecord){
-            return res.status(404).json({ message: "Invalid OTP" });
-        }
+export async function resetPassword(req, res) {
+  const { email, otp, newPassword } = req.body;
 
-        const user = await User.findOne({ email: email });
-        if(!user){
-            return res.status(404).json({ message: "User not found" });
-        }
-        const hashedPassword = bcrypt.hashSync(newPassword, 10);
-        await User.updateOne({ email: email }, { password: hashedPassword });
-        await OTP.deleteMany({ email: email });
+  try {
+    const otpRecord = await OTP.findOne({ email, otp });
 
-        res.json({ message: "Password reset successfully" });
-    }catch(err){
-        console.log(err)
-        res.status(500).json({ message: "Failed to reset password" });
+    if (!otpRecord) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
     }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await User.updateOne(
+      { email },
+      { password: hashedPassword }
+    );
+
+    await OTP.deleteMany({ email });
+
+    res.json({ message: "Password reset successfully" });
+
+  } catch (err) {
+    console.error("Reset password error:", err);
+    res.status(500).json({ message: "Failed to reset password" });
+  }
 }
 
 // Get all users (Admin)
