@@ -211,32 +211,29 @@ export async function googleLogin(req, res) {
 //  Send OTP with Gmail
 export async function sendOTP(req, res) {
   const { email } = req.body;
-  const otpCode = Math.floor(100000 + Math.random() * 900000).toString(); // ✅ STRING
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
   try {
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
     await OTP.deleteMany({ email });
 
-    const newOTP = new OTP({ email, otp: otpCode });
-    await newOTP.save();
+    await OTP.create({ email, otp: otpCode });
 
-    const message = {
-      from: process.env.EMAIL_USER,
+    await transporter.sendMail({
+      from: `"NaturaGlow" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Your OTP Code - NaturaGlow",
       text: `Your OTP code is ${otpCode}. This OTP is valid for 5 minutes.`,
-    };
-
-    transporter.sendMail(message, (error) => {
-      if (error) {
-        console.error("Email error:", error);
-        return res.status(500).json({ message: "Failed to send OTP" });
-      }
-      res.json({ message: "OTP sent successfully" });
     });
 
+    res.json({ message: "OTP sent successfully" });
+
   } catch (error) {
-    console.error("OTP error:", error);
-    res.status(500).json({ message: "Failed to process OTP" });
+    console.error("Send OTP error:", error);
+    res.status(500).json({ message: "Failed to send OTP" });
   }
 }
 
@@ -245,7 +242,10 @@ export async function resetPassword(req, res) {
   const { email, otp, newPassword } = req.body;
 
   try {
-    const otpRecord = await OTP.findOne({ email, otp });
+    const otpRecord = await OTP.findOne({
+      email,
+      otp: otp.trim(), 
+    });
 
     if (!otpRecord) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
@@ -258,17 +258,15 @@ export async function resetPassword(req, res) {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await User.updateOne(
-      { email },
-      { password: hashedPassword }
-    );
+    user.password = hashedPassword;
+    await user.save();
 
     await OTP.deleteMany({ email });
 
     res.json({ message: "Password reset successfully" });
 
-  } catch (err) {
-    console.error("Reset password error:", err);
+  } catch (error) {
+    console.error("Reset password error:", error);
     res.status(500).json({ message: "Failed to reset password" });
   }
 }
