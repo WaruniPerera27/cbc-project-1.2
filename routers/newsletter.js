@@ -7,29 +7,45 @@ const router = express.Router();
 // Subscribe route
 router.post("/subscribe", async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = req.body?.email?.trim().toLowerCase();
+
+    // ✅ Validate email
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
 
-    // check if already exists
+    // ✅ Check existing (normalized)
     const exists = await Newsletter.findOne({ email });
     if (exists) {
       return res.status(400).json({ message: "Already subscribed" });
     }
 
-  
-    const newSub = new Newsletter({ email });
-    await newSub.save();
+    // ✅ Save first
+    await Newsletter.create({ email });
 
-    // send welcome email
-    await sendWelcomeEmail(email);
+    // ✅ Send email WITHOUT breaking subscription
+    try {
+      await sendWelcomeEmail(email);
+    } catch (mailErr) {
+      console.error("Email send failed:", mailErr.message);
+      // DO NOT fail subscription
+    }
 
-    res.status(201).json({ message: "Subscribed successfully ✅" });
+    return res.status(201).json({
+      message: "Subscribed successfully ✅"
+    });
+
   } catch (err) {
     console.error("Newsletter error:", err);
-    res.status(500).json({ message: "Server error" });
+
+    // ✅ Handle Mongo duplicate index error safely
+    if (err.code === 11000) {
+      return res.status(400).json({ message: "Already subscribed" });
+    }
+
+    return res.status(500).json({ message: "Server error" });
   }
 });
+
 
 export default router;

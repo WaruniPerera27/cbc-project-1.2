@@ -14,7 +14,7 @@ dotenv.config();
 
 const app = express();
 
-// ✅ CORS
+// CORS
 app.use(
   cors({
     origin: [
@@ -26,20 +26,17 @@ app.use(
   })
 );
 
-// ✅ Body parser
+// Body parser
 app.use(express.json());
 
-// ==============================
-// ✅ PUBLIC ROUTES (NO JWT)
-// ==============================
+
 app.use("/user", userRouter);          // login, register, send-otp, reset-password
 app.use("/products", productRouter);   // product listing
 app.use("/reviews", reviewRoutes);     // reviews
 app.use("/newsletter", newsletterRoutes); // newsletter subscribe
 
-// ==============================
-// 🔒 JWT MIDDLEWARE (PROTECTED)
-// ==============================
+
+
 app.use((req, res, next) => {
   const authHeader = req.header("Authorization");
 
@@ -58,23 +55,21 @@ app.use((req, res, next) => {
   });
 });
 
-// ==============================
-// 🔒 PROTECTED ROUTES
-// ==============================
-app.use("/orders", orderRouter); // requires login
 
-// ✅ Root test
+app.use("/orders", orderRouter); 
+
+
 app.get("/", (req, res) => {
   res.send("API is running");
 });
 
-// ✅ Database
+
 mongoose
   .connect(process.env.MONGO_URL)
   .then(() => console.log("Database connected"))
   .catch((err) => console.error("DB connection failed", err));
 
-// ✅ Server
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
